@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D-Day Manager</title>
+
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont;
+  background: #0f172a;
+  color: white;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 10px;
+  border: none;
+}
+
+input, select {
+  background: #1e293b;
+  color: white;
+}
+
+button {
+  background: #3b82f6;
+  color: white;
+  font-weight: bold;
+}
+
+.task {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.urgent { background: #ef4444; }
+.normal { background: #f59e0b; }
+.safe { background: #10b981; }
+
+.done {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.actions button {
+  margin-left: 5px;
+  padding: 6px 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>📅 D-Day</h1>
+
+  <input type="text" id="title" placeholder="할 일">
+  <input type="date" id="date">
+  <select id="category">
+    <option>📚 공부</option>
+    <option>📝 과제</option>
+    <option>🎯 목표</option>
+  </select>
+
+  <button onclick="addTask()">추가</button>
+
+  <select onchange="filterTasks(this.value)">
+    <option value="all">전체</option>
+    <option value="study">📚 공부</option>
+    <option value="task">📝 과제</option>
+    <option value="goal">🎯 목표</option>
+  </select>
+
+  <div id="list"></div>
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let filter = "all";
+
+function save() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function getDays(date) {
+  const today = new Date();
+  const due = new Date(date);
+  return Math.ceil((due - today) / (1000*60*60*24));
+}
+
+function addTask() {
+  const title = document.getElementById("title").value;
+  const date = document.getElementById("date").value;
+  const category = document.getElementById("category").value;
+
+  if (!title || !date) return alert("다 입력해");
+
+  tasks.push({ title, date, category, done:false });
+  save();
+  render();
+}
+
+function removeTask(i) {
+  tasks.splice(i, 1);
+  save();
+  render();
+}
+
+function toggleDone(i) {
+  tasks[i].done = !tasks[i].done;
+  save();
+  render();
+}
+
+function filterTasks(val) {
+  filter = val;
+  render();
+}
+
+function render() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  let filtered = tasks;
+
+  if (filter !== "all") {
+    filtered = tasks.filter(t => {
+      if (filter === "study") return t.category.includes("공부");
+      if (filter === "task") return t.category.includes("과제");
+      if (filter === "goal") return t.category.includes("목표");
+    });
+  }
+
+  filtered.sort((a,b)=>getDays(a.date)-getDays(b.date));
+
+  filtered.forEach((t,i)=>{
+    const days = getDays(t.date);
+    const div = document.createElement("div");
+
+    let cls = "safe";
+    if (days <= 3) cls = "urgent";
+    else if (days <= 7) cls = "normal";
+
+    div.className = `task ${cls} ${t.done ? "done":""}`;
+
+    div.innerHTML = `
+      <div>
+        <strong>${t.category} ${t.title}</strong><br>
+        ${days <= 0 ? "🔥 D-day" : "D-"+days}
+      </div>
+      <div class="actions">
+        <button onclick="toggleDone(${i})">✔</button>
+        <button onclick="removeTask(${i})">❌</button>
+      </div>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
