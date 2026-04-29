@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>D-Day Manager</title>
 
+<!-- 고급 폰트 -->
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
 body {
-  font-family: -apple-system, BlinkMacSystemFont;
-  background: #0f172a;
-  color: white;
+  font-family: 'Pretendard', sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #e2e8f0;
+  margin: 0;
   display: flex;
   justify-content: center;
-  margin: 0;
 }
 
 .container {
@@ -23,48 +26,77 @@ body {
 
 h1 {
   text-align: center;
-}
-
-input, select, button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 8px;
-  border-radius: 10px;
-  border: none;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 input, select {
-  background: #1e293b;
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255,255,255,0.05);
   color: white;
+  backdrop-filter: blur(10px);
 }
 
 button {
-  background: #3b82f6;
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
   color: white;
-  font-weight: bold;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  transform: scale(1.03);
 }
 
 .task {
-  margin-top: 12px;
-  padding: 14px;
-  border-radius: 12px;
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  backdrop-filter: blur(10px);
+  transition: 0.2s;
 }
 
-.urgent { background: #ef4444; }
-.normal { background: #f59e0b; }
-.safe { background: #10b981; }
+.task:hover {
+  transform: translateY(-3px);
+}
+
+.urgent { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.normal { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.safe { background: linear-gradient(135deg, #10b981, #059669); }
 
 .done {
-  opacity: 0.5;
+  opacity: 0.4;
   text-decoration: line-through;
 }
 
+.title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dday {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
 .actions button {
-  margin-left: 5px;
   padding: 6px 10px;
+  margin-left: 5px;
+  border-radius: 8px;
+  font-size: 12px;
 }
 </style>
 </head>
@@ -74,29 +106,22 @@ button {
 <div class="container">
   <h1>📅 D-Day</h1>
 
-  <input type="text" id="title" placeholder="할 일">
+  <input type="text" id="title" placeholder="할 일 입력">
   <input type="date" id="date">
+
   <select id="category">
     <option>📚 공부</option>
     <option>📝 과제</option>
     <option>🎯 목표</option>
   </select>
 
-  <button onclick="addTask()">추가</button>
-
-  <select onchange="filterTasks(this.value)">
-    <option value="all">전체</option>
-    <option value="study">📚 공부</option>
-    <option value="task">📝 과제</option>
-    <option value="goal">🎯 목표</option>
-  </select>
+  <button onclick="addTask()">추가하기</button>
 
   <div id="list"></div>
 </div>
 
 <script>
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let filter = "all";
 
 function save() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -132,28 +157,13 @@ function toggleDone(i) {
   render();
 }
 
-function filterTasks(val) {
-  filter = val;
-  render();
-}
-
 function render() {
   const list = document.getElementById("list");
   list.innerHTML = "";
 
-  let filtered = tasks;
+  tasks.sort((a,b)=>getDays(a.date)-getDays(b.date));
 
-  if (filter !== "all") {
-    filtered = tasks.filter(t => {
-      if (filter === "study") return t.category.includes("공부");
-      if (filter === "task") return t.category.includes("과제");
-      if (filter === "goal") return t.category.includes("목표");
-    });
-  }
-
-  filtered.sort((a,b)=>getDays(a.date)-getDays(b.date));
-
-  filtered.forEach((t,i)=>{
+  tasks.forEach((t,i)=>{
     const days = getDays(t.date);
     const div = document.createElement("div");
 
@@ -165,12 +175,12 @@ function render() {
 
     div.innerHTML = `
       <div>
-        <strong>${t.category} ${t.title}</strong><br>
-        ${days <= 0 ? "🔥 D-day" : "D-"+days}
+        <div class="title">${t.category} ${t.title}</div>
+        <div class="dday">${days <= 0 ? "🔥 D-day" : "D-"+days}</div>
       </div>
       <div class="actions">
         <button onclick="toggleDone(${i})">✔</button>
-        <button onclick="removeTask(${i})">❌</button>
+        <button onclick="removeTask(${i})">✖</button>
       </div>
     `;
 
